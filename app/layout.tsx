@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import { Toaster } from 'react-hot-toast'
 import '@/app/globals.css'
 
@@ -47,10 +48,14 @@ export default function RootLayout({
           <div className="bg-white px-4 py-3">
             <div className="mx-auto flex max-w-4xl items-center justify-between">
               <div className="flex items-center gap-3">
-                {/* Escudo simplificado / Ícono */}
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-900 text-white text-xs font-bold">
-                  PE
-                </div>
+                <Image
+                  src="/logo.jpeg"
+                  alt="Logo de la empresa"
+                  width={48}
+                  height={48}
+                  className="rounded-full object-cover"
+                  priority
+                />
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-widest">
                     {process.env.NEXT_PUBLIC_COMPANY_NAME ?? 'Mi Empresa S.A.C.'}

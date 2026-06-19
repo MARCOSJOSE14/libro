@@ -1,4 +1,6 @@
 import { PDFDocument, rgb, StandardFonts, PDFFont, PDFPage } from 'pdf-lib'
+import fs from 'fs'
+import path from 'path'
 import type { Claim } from '@prisma/client'
 import {
   DOCUMENT_TYPE_LABELS,
@@ -35,6 +37,16 @@ interface TextOpts {
 export async function generateClaimPdf(claim: Claim): Promise<Uint8Array> {
   const doc = await PDFDocument.create()
   doc.setTitle(`Libro de Reclamaciones - ${claim.claimNumber}`)
+
+  // Cargar logo desde /public/logo.jpeg
+  let logoImage = null
+  try {
+    const logoPath = path.join(process.cwd(), 'public', 'logo.jpeg')
+    const logoBytes = fs.readFileSync(logoPath)
+    logoImage = await doc.embedJpg(logoBytes)
+  } catch {
+    // Si no encuentra el logo continúa sin él
+  }
   doc.setAuthor(COMPANY_NAME)
   doc.setSubject(`Reclamación N° ${claim.claimNumber}`)
   doc.setCreationDate(new Date())
@@ -77,11 +89,17 @@ export async function generateClaimPdf(claim: Claim): Promise<Uint8Array> {
   // Fondo del encabezado
   page.drawRectangle({ x: 0, y: H - 90, width: 595, height: 84, color: C.darkBlue })
 
-  // Datos empresa (izquierda)
-  text(COMPANY_NAME.toUpperCase(), { x: 30, y: H - 28, size: 13, font: bold, color: C.white })
-  text(`RUC: ${COMPANY_RUC}`, { x: 30, y: H - 44, size: 8.5, font: regular, color: C.white })
-  text(`Dir.: ${COMPANY_ADDRESS}`, { x: 30, y: H - 55, size: 8, font: regular, color: C.white })
-  text(`Tel.: ${COMPANY_PHONE}`, { x: 30, y: H - 66, size: 8, font: regular, color: C.white })
+  // Logo empresa (izquierda)
+  if (logoImage) {
+    doc.getPages()[0].drawImage(logoImage, { x: 30, y: H - 82, width: 60, height: 60 })
+  }
+
+  // Datos empresa (a la derecha del logo si existe, o desde el inicio)
+  const textStartX = logoImage ? 100 : 30
+  text(COMPANY_NAME.toUpperCase(), { x: textStartX, y: H - 28, size: 13, font: bold, color: C.white })
+  text(`RUC: ${COMPANY_RUC}`, { x: textStartX, y: H - 44, size: 8.5, font: regular, color: C.white })
+  text(`Dir.: ${COMPANY_ADDRESS}`, { x: textStartX, y: H - 55, size: 8, font: regular, color: C.white })
+  text(`Tel.: ${COMPANY_PHONE}`, { x: textStartX, y: H - 66, size: 8, font: regular, color: C.white })
 
   // Título (derecha)
   text('LIBRO DE', { x: 415, y: H - 28, size: 20, font: bold, color: C.white })
