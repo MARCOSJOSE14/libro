@@ -1,9 +1,8 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['@prisma/client'],
-  },
+  // En Next.js 15 la opción se renombró de serverComponentsExternalPackages a serverExternalPackages
+  serverExternalPackages: ['@prisma/client'],
 }
 
 export default nextConfig
