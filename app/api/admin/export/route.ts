@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { formatDateTimePeru, formatDatePeru, formatCurrency } from '@/lib/utils'
+import { formatDateTimePeru, formatDatePeru } from '@/lib/utils'
 import { DOCUMENT_TYPE_LABELS, PRODUCT_TYPE_LABELS, CLAIM_TYPE_LABELS, CLAIM_STATUS_LABELS } from '@/types/claim'
 import { requireAdmin } from '@/lib/admin-auth'
 
