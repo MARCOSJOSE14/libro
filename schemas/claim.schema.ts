@@ -123,8 +123,3 @@ export const claimSchema = z
   })
 
 export type ClaimFormValues = z.infer<typeof claimSchema>
-
-// Schema para validar en el servidor (sin acceptsDeclaration — ya no se persiste)
-export const claimApiSchema = claimSchema.omit({ acceptsDeclaration: true }).extend({
-  acceptsDeclaration: z.boolean().optional(),
-})
