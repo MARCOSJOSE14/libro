@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────
+// TABLA PRINCIPAL — Ley N.° 29571 Art. 150 y ss.
+// ─────────────────────────────────────────────────────
+model Claim {
+  id          String @id @default(uuid())
+
+  // Número de folio correlativo: REC-YYYY-NNNNNN
+  // Requisito: DS 011-2011-PCM Art. 5 — debe ser único e imprimible
+  claimNumber String @unique
+
+  // ── Datos del consumidor ──────────────────────────
+  firstName      String  @db.VarChar(100)
+  lastName       String  @db.VarChar(100)
+  documentType   DocumentType
+  documentNumber String  @db.VarChar(20)
+  email          String  @db.VarChar(255)
+  phone          String  @db.VarChar(15)
+  address        String  @db.VarChar(500)
+
+  // ── Bien contratado ───────────────────────────────
+  productType ProductType
+
+  // ── Detalle del reclamo ───────────────────────────
+  claimType       ClaimType
+  claimedAmount   Decimal?  @db.Decimal(12, 2)
+  incidentDate    DateTime
+  description     String    @db.Text
+  consumerRequest String    @db.Text
+
+  // ── Estado y gestión interna ──────────────────────
+  status ClaimStatus @default(PENDING)
+
+  // Respuesta de la empresa (obligatoria dentro del plazo legal)
+  companyResponse String?   @db.Text
+  respondedAt     DateTime?
+  respondedBy     String?   @db.VarChar(255)
+
+  // Plazo legal: 30 días hábiles desde el registro (Art. 24 DS 011-2011-PCM)
+  responseDeadline DateTime
+
+  // ── Trazabilidad ──────────────────────────────────
+  // IP del solicitante — requerido por INDECOPI para auditorías
+  submitterIp String? @db.VarChar(45)  // IPv6 max = 45 chars
+
+  // Zona horaria en que se registró (siempre "America/Lima")
+  timezone String @default("America/Lima") @db.VarChar(50)
+
+  // ── Relaciones ────────────────────────────────────
+  auditLogs AuditLog[]
+
+  // ── Timestamps con precisión ──────────────────────
+  // createdAt = momento exacto del registro (hora Lima)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([documentNumber])
+  @@index([status])
+  @@index([createdAt])
+  @@index([responseDeadline])
+  @@map("claims")
+}
+
+// ─────────────────────────────────────────────────────
+// AUDITORÍA — Trazabilidad completa exigida por INDECOPI
+// Registra CADA cambio de estado y acción sobre un reclamo
+// ─────────────────────────────────────────────────────
+model AuditLog {
+  id        String   @id @default(uuid())
+  claimId   String
+  claim     Claim    @relation(fields: [claimId], references: [id], onDelete: Cascade)
+
+  action    AuditAction
+  // Estado anterior y nuevo (para cambios de status)
+  fromStatus ClaimStatus?
+  toStatus   ClaimStatus?
+
+  // Quién realizó la acción (consumidor o admin)
+  actor     String   @db.VarChar(255)
+  actorIp   String?  @db.VarChar(45)
+
+  // Detalle adicional (ej.: "Respuesta enviada por correo")
+  notes     String?  @db.Text
+
+  createdAt DateTime @default(now())
+
+  @@index([claimId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────────────
+// SECUENCIA CORRELATIVA — Garantía de unicidad
+// ─────────────────────────────────────────────────────
+model ClaimSequence {
+  id        Int      @id @default(autoincrement())
+  year      Int
+  sequence  Int
+  createdAt DateTime @default(now())
+
+  @@unique([year, sequence])
+  @@map("claim_sequences")
+}
+
+// ─────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────
+enum DocumentType {
+  DNI
+  CE
+  PASAPORTE
+
+  @@map("document_type")
+}
+
+enum ProductType {
+  PRODUCTO
+  SERVICIO
+
+  @@map("product_type")
+}
+
+enum ClaimType {
+  RECLAMO
+  QUEJA
+
+  @@map("claim_type")
+}
+
+enum ClaimStatus {
+  PENDING    // Ingresado — pendiente de atención
+  IN_REVIEW  // En revisión por la empresa
+  RESPONDED  // Empresa respondió dentro del plazo
+  RESOLVED   // Resuelto a satisfacción del consumidor
+  REJECTED   // Rechazado con justificación
+  EXPIRED    // Venció el plazo de 30 días hábiles sin respuesta
+
+  @@map("claim_status")
+}
+
+enum AuditAction {
+  CREATED          // Reclamo ingresado por el consumidor
+  STATUS_CHANGED   // Cambio de estado por el administrador
+  RESPONDED        // Empresa envió respuesta formal
+  EXPORTED         // Registro exportado para auditoría INDECOPI
+  VIEWED           // Reclamo consultado por administrador
+
+  @@map("audit_action")
+}
