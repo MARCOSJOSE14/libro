@@ -60,11 +60,16 @@ export const claimSchema = z
     }),
 
     claimedAmount: z
-      .string()
+      .union([z.string(), z.number()])
       .optional()
-      .transform((val) => (val === '' || val === undefined ? null : parseFloat(val)))
+      .nullable()
+      .transform((val) => {
+        if (val === '' || val === undefined || val === null) return null
+        const num = typeof val === 'number' ? val : parseFloat(val)
+        return isNaN(num) ? null : num
+      })
       .refine(
-        (val) => val === null || (!isNaN(val) && val >= 0 && val <= 999999999),
+        (val) => val === null || (val >= 0 && val <= 999999999),
         { message: 'Ingrese un monto válido' }
       ),
 
