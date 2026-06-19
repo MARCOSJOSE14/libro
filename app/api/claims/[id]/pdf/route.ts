@@ -26,7 +26,7 @@ export async function GET(
 
     const filename = `libro-reclamaciones-${claim.claimNumber}.pdf`
 
-    return new NextResponse(pdfBytes, {
+    return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',
