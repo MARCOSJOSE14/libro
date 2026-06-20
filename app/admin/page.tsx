@@ -386,6 +386,14 @@ function ClaimDetailModal({
   const [respondedBy, setRespondedBy] = useState('Administrador')
   const [loading, setLoading]       = useState(false)
   const [error, setError]           = useState('')
+  const [copied, setCopied]         = useState(false)
+
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/estado/${claim.claimNumber}`
+    navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const handleRespond = async () => {
     if (response.trim().length < 10) {
@@ -433,6 +441,13 @@ function ClaimDetailModal({
             <h2 className="text-lg font-bold">{claim.claimNumber}</h2>
           </div>
           <div className="flex gap-2">
+            <button
+              onClick={handleCopyLink}
+              className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-500 transition-colors"
+              title="Copiar enlace para enviar al cliente"
+            >
+              {copied ? '✓ Copiado' : '🔗 Copiar enlace'}
+            </button>
             <button
               onClick={handleDownloadPdf}
               className="rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600"
