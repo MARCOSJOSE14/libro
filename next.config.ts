@@ -1,8 +1,9 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  // En Next.js 15 la opción se renombró de serverComponentsExternalPackages a serverExternalPackages
   serverExternalPackages: ['@prisma/client'],
+  // RUC como ruta base: https://dominio.com/10721468688
+  basePath: '/10721468688',
 }
 
 export default nextConfig
